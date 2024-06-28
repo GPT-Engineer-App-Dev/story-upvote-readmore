@@ -16,9 +16,23 @@ const fetchTopStories = async () => {
   return stories;
 };
 
+const retryFetch = async (fn, retries = 3, delay = 1000) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i < retries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else {
+        throw error;
+      }
+    }
+  }
+};
+
 const StoryList = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { data, isLoading } = useQuery('topStories', fetchTopStories);
+  const { data, isLoading } = useQuery('topStories', () => retryFetch(fetchTopStories));
 
   const filteredStories = data?.filter((story) =>
     story.title.toLowerCase().includes(searchTerm.toLowerCase())
