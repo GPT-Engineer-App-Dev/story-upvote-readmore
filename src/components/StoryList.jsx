@@ -24,6 +24,7 @@ const retryFetch = async (fn, retries = 3, delay = 1000) => {
       if (i < retries - 1) {
         await new Promise((resolve) => setTimeout(resolve, delay));
       } else {
+        console.error("Fetch operation failed after maximum retries:", error);
         throw error;
       }
     }
@@ -32,7 +33,7 @@ const retryFetch = async (fn, retries = 3, delay = 1000) => {
 
 const StoryList = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { data, isLoading } = useQuery('topStories', () => retryFetch(fetchTopStories));
+  const { data, isLoading, error } = useQuery('topStories', () => retryFetch(fetchTopStories));
 
   const filteredStories = data?.filter((story) =>
     story.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -49,6 +50,8 @@ const StoryList = () => {
       />
       {isLoading ? (
         <Skeleton className="w-full h-20 mb-4" count={10} />
+      ) : error ? (
+        <div className="text-red-500">Failed to load stories. Please try again later.</div>
       ) : (
         filteredStories?.map((story) => <StoryCard key={story.id} story={story} />)
       )}
